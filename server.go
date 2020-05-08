@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -23,6 +24,7 @@ type Master struct {
 }
 
 type WorkerStatus struct {
+	pid int
 	exitStatus int
 	err error
 }
@@ -41,40 +43,62 @@ func NewMaster(addr string) (*Master, error) {
 	return m, nil
 }
 
-func (master *Master) Run() {
+func (master *Master) Run() error {
 	// create worker and pass socket discriptor, then wait until received signal
-	signal.Notify(master.sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
-	
+	pid, err := master.CreateWorker() //ここでPIDを取れる必要がある
+	if err != nil {
+		return err
+	}
 	for {
-		workerCh := master.CreateWorker()
 		select {
 		case c := <- master.sigCh:
-			//
-			_ = c
-		case c := <- workerCh:
+			switch c {
+			case syscall.SIGHUP:
+				newPid, err := master.CreateWorker()
+				if err != nil {
+					return err
+				}
+				_ = newPid
+				// kill oldworker
+				p, err := os.FindProcess(pid)
+				if err != nil {
+					log.Println(err)
+				} else {
+					p.Kill()
+				}
+			case syscall.SIGTERM:
+				log.Println("sigterm")
+			}
+		case c := <- master.workerCh:
 			// worker exited.
-			_ = c
+			log.Printf("worker %d exited with statud code %d, err %v\n", c.pid, c.exitStatus, c.err)
+			if c.err != nil {
+				break
+			}
 		}
-
 	}
 }
 
 // CreateWorker creates listener process and return created process struct.
-func (master *Master) CreateWorker() chan WorkerStatus {
-	result := make(chan WorkerStatus)
-
+func (master *Master) CreateWorker() (int, error) {
+	cmd := exec.Command(master.command, master.commandArgs...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	socketFile, err := master.listener.(*net.TCPListener).File()
+	if err != nil {
+		return 0, err
+	}
+	cmd.ExtraFiles = append(cmd.ExtraFiles, socketFile)
+	err = cmd.Start()
+	if err != nil {
+		return 0, err
+	}
 	go func() {
-		cmd := exec.Command(master.command, master.commandArgs...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		socketFile, err := master.listener.(*net.TCPListener).File()
-		if err != nil {
-			result <- WorkerStatus{err: err,}
+		err := cmd.Wait()
+		master.workerCh <- WorkerStatus{
+			exitStatus: cmd.ProcessState.ExitCode(),
+			err: err,
 		}
-		cmd.ExtraFiles = append(cmd.ExtraFiles, socketFile)
-		err = cmd.Run()
-		
 	}()
-
-	return result
+	return cmd.ProcessState.Pid(), nil
 }
