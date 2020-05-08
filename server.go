@@ -8,6 +8,12 @@ import (
 	"syscall"
 )
 
+const FAILSTATUS = 1
+
+func init() {
+	log.SetFlags(log.Ltime|log.Lmicroseconds)
+}
+
 type Master struct {
 	listener net.Listener
 	command string
