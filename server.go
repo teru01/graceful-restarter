@@ -70,7 +70,7 @@ func (master *Master) Run() error {
 			case syscall.SIGINT:
 			case syscall.SIGQUIT:
 				log.Println("sigterm received")
-				err := killProcess(pid)
+				err := killProcess(pid) // TODO not kill , but sigterm
 				return err
 			}
 		case c := <- master.workerCh:
