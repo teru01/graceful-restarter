@@ -88,7 +88,7 @@ func killProcess(pid int) error {
 	if err != nil {
 		return err
 	}
-	return p.Kill()
+	return p.Signal(syscall.SIGTERM)
 }
 
 // CreateWorker creates listener process and return created process struct.
