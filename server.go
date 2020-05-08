@@ -32,11 +32,13 @@ func NewMaster(addr string) (*Master, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Master{
+	m := &Master{
 		listener: l,
 		sigCh: make(chan os.Signal, 1),
 		workerCh: make(chan WorkerStatus, 5), // TODO: define chan size
-	}, nil
+	}
+	signal.Notify(m.sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	return m, nil
 }
 
 func (master *Master) Run() {
