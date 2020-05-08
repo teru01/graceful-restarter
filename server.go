@@ -75,7 +75,7 @@ func (master *Master) Run() error {
 			}
 		case c := <- master.workerCh:
 			// worker exited.
-			log.Printf("worker %d exited with statud code %d, err %v\n", c.pid, c.exitStatus, c.err)
+			log.Printf("worker %d exited with status code %d, err %v\n", c.pid, c.exitStatus, c.err)
 			if c.err != nil {
 				break
 			}
@@ -83,14 +83,12 @@ func (master *Master) Run() error {
 	}
 }
 
-func killProcess(pid) error {
+func killProcess(pid int) error {
 	p, err := os.FindProcess(pid)
 	if err != nil {
 		return err
 	}
-	if err := p.Kill(); err != nil {
-		return err
-	}
+	return p.Kill()
 }
 
 // CreateWorker creates listener process and return created process struct.
