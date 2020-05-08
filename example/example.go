@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/teru01/graceful-restarter/listener"
+	listener "github.com/teru01/graceful-restarter/graceful-listener"
 )
 
 /*
