@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 const FAILSTATUS = 1
@@ -45,7 +46,7 @@ func NewMaster(addr string) (*Master, error) {
 
 func (master *Master) Run() error {
 	// create worker and pass socket discriptor, then wait until received signal
-	pid, err := master.CreateWorker() //ここでPIDを取れる必要がある
+	pid, err := master.CreateWorker()
 	if err != nil {
 		return err
 	}
@@ -58,16 +59,19 @@ func (master *Master) Run() error {
 				if err != nil {
 					return err
 				}
-				_ = newPid
-				// kill oldworker
-				p, err := os.FindProcess(pid)
+				time.Sleep(1 * time.Second)
+
+				err = killProcess(pid)
 				if err != nil {
-					log.Println(err)
-				} else {
-					p.Kill()
+					return err
 				}
+				pid = newPid
 			case syscall.SIGTERM:
-				log.Println("sigterm")
+			case syscall.SIGINT:
+			case syscall.SIGQUIT:
+				log.Println("sigterm received")
+				err := killProcess(pid)
+				return err
 			}
 		case c := <- master.workerCh:
 			// worker exited.
@@ -76,6 +80,16 @@ func (master *Master) Run() error {
 				break
 			}
 		}
+	}
+}
+
+func killProcess(pid) error {
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		return err
+	}
+	if err := p.Kill(); err != nil {
+		return err
 	}
 }
 
