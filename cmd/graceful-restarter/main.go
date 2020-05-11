@@ -11,7 +11,7 @@ import (
 )
 
 func help() {
-	fmt.Fprintf(os.Stderr, "Usage: graceful-restarter -L [listen port] program arg-1 arg-2 ...")
+	fmt.Fprintf(os.Stderr, "Usage: graceful-restarter -L [listen port] program arg-1 arg-2 ...\n")
 }
 
 func main() {
