@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -18,8 +19,7 @@ func init() {
 
 type Master struct {
 	listener net.Listener
-	command string
-	commandArgs []string
+	command []string
 	sigCh chan os.Signal
 	workerCh chan WorkerStatus
 }
@@ -30,13 +30,14 @@ type WorkerStatus struct {
 	err error
 }
 
-func NewMaster(addr string) (*Master, error) {
+func NewMaster(addr string, command []string) (*Master, error) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	m := &Master{
 		listener: l,
+		command: command,
 		sigCh: make(chan os.Signal, 1),
 		workerCh: make(chan WorkerStatus, 5), // TODO: define chan size
 	}
@@ -93,7 +94,14 @@ func killProcess(pid int) error {
 
 // CreateWorker creates listener process and return created process struct.
 func (master *Master) CreateWorker() (int, error) {
-	cmd := exec.Command(master.command, master.commandArgs...)
+	var cmd *exec.Cmd
+	if len(master.command) == 1 {
+		cmd = exec.Command(master.command[0])
+	} else if len(master.command) > 1 {
+		cmd = exec.Command(master.command[0], master.command[1:]...)
+	} else {
+		return -1, fmt.Errorf("invalid command")
+	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	socketFile, err := master.listener.(*net.TCPListener).File()
