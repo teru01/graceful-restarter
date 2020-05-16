@@ -42,6 +42,7 @@ func NewMaster(addr string, command []string) (*Master, error) {
 		workerCh: make(chan WorkerStatus, 5), // TODO: define chan size
 	}
 	signal.Notify(m.sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	fmt.Printf("master process initiated. pid=%d\n", os.Getpid())
 	return m, nil
 }
 
@@ -74,7 +75,7 @@ func (master *Master) Run() error {
 				err := killProcess(pid)
 				return err
 			}
-		case c := <- master.workerCh:
+		case c := <- master.workerCh: //TODO: FIX: when ctrl-c is sent, child process exit with status code -1, and makes terminal frozen.
 			// worker exited.
 			log.Printf("worker %d exited with status code %d, err %v\n", c.pid, c.exitStatus, c.err)
 			if c.err != nil {
@@ -120,7 +121,7 @@ func (master *Master) CreateWorker() (int, error) {
 			err: err,
 		}
 	}()
-	return cmd.ProcessState.Pid(), nil
+	return cmd.Process.Pid, nil
 }
 
 // func signalToName(s os.Signal) string {
