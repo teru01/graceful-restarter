@@ -60,7 +60,7 @@ func (master *Master) Run() error {
 				if err != nil {
 					return err
 				}
-				time.Sleep(1 * time.Second)
+				time.Sleep(1 * time.Second) // TODO adjust
 
 				err = killProcess(pid)
 				if err != nil {
@@ -70,8 +70,8 @@ func (master *Master) Run() error {
 			case syscall.SIGTERM:
 			case syscall.SIGINT:
 			case syscall.SIGQUIT:
-				log.Println("sigterm received")
-				err := killProcess(pid) // TODO not kill , but sigterm
+				log.Printf("%v received\n", c)
+				err := killProcess(pid)
 				return err
 			}
 		case c := <- master.workerCh:
@@ -122,3 +122,7 @@ func (master *Master) CreateWorker() (int, error) {
 	}()
 	return cmd.ProcessState.Pid(), nil
 }
+
+// func signalToName(s os.Signal) string {
+
+// }
