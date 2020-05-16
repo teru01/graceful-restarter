@@ -21,8 +21,9 @@ func main() {
 		os.Exit(1)
 	}
 	addr := flag.String("L", "127.0.0.1:0", "listen addr:port")
+	flag.Parse()
 	fmt.Println(*addr)
-	master, err := server.NewMaster(*addr, os.Args[1:])
+	master, err := server.NewMaster(*addr, flag.Args())
 	if err != nil {
 		panic(err)
 	}
