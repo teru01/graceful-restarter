@@ -69,7 +69,9 @@ func (master *Master) Run() error {
 				}
 				pid = newPid
 			case syscall.SIGTERM:
+				fallthrough
 			case syscall.SIGINT:
+				fallthrough
 			case syscall.SIGQUIT:
 				log.Printf("%v received\n", c)
 				err := killProcess(pid)
