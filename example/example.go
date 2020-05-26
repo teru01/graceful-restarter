@@ -17,10 +17,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer l.Close()
 	server := http.Server{
 		Handler: http.HandlerFunc(handler),
 	}
-	go server.Serve(l)
+	go l.serve(server)
+	// go server.Serve(l)
 	listener.WaitAndGracefulShutdown(l)
 }

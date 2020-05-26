@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-type GracefulListener {
+type GracefulListener struct {
 	listener net.Listener
 	wg sync.WaitGroup
 	quit chan struct{}
@@ -17,6 +17,7 @@ type GracefulListener {
 
 func (l *GracefulListener) WaitShutdownAll() {
 	close(quit)
+	l.listener.Close()
 	wg.Wait()
 }
 
@@ -29,15 +30,30 @@ func (l *GracefulListener) serve(server http.Server) {
 	for {
 		conn, err := l.listener.Accept()
 		if err != nil {
-			
+			select {
+			case <- l.quit:
+				return
+			default:
+				fmt.Fprintln(os.Stderr, err)
+			}
+		} else {
+			l.wg.Add(1)
+			go func() {
+				server.Handler()
+				l.wg.Done()
+			}
 		}
 	}
 }
 
 // Listen use file descriptor passed by Master as a socket.
-func Listen() (net.Listener, error) {
-	return GraceGracefulListener {
-		listener: net.FileListener(os.NewFile(uintptr(3), "dummy")),
+func Listen() (GracefulListener, error) {
+	ln, err := net.FileListener(os.NewFile(uintptr(3), "dummy"))
+	if err != nil {
+		return err
+	}
+	return GracefulListener {
+		listener: ln,
 		quit: make(chan struct{})
 	}
 }
