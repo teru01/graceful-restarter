@@ -2,7 +2,6 @@
 package listener
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
