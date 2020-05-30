@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"net"
 	"os"
 
 	listener "github.com/teru01/graceful-restarter/graceful-listener"
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "server pid %d\n", os.Getpid())
+func handler(conn net.Conn) {
+	fmt.Fprintf(conn, "server pid %d\n", os.Getpid())
 }
 
 func main() {
@@ -17,10 +17,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	server := http.Server{
-		Handler: http.HandlerFunc(handler),
-	}
-	go l.serve(server)
+	go l.Serve(handler)
 	// go server.Serve(l)
-	listener.WaitAndGracefulShutdown(l)
+	l.WaitAndGracefulShutdown()
 }

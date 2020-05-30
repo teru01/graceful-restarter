@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"fmt"
 	"os/signal"
 	"syscall"
 )
@@ -16,9 +17,16 @@ type GracefulListener struct {
 }
 
 func (l *GracefulListener) WaitShutdownAll() {
-	close(quit)
+	close(l.quit)
 	l.listener.Close()
-	wg.Wait()
+	l.wg.Wait()
+}
+
+func (l *GracefulListener) WaitAndGracefulShutdown() {
+	ch := make(chan os.Signal)
+	signal.Notify(ch, syscall.SIGTERM)
+	<- ch
+	l.WaitShutdownAll()
 }
 
 // func (l *GracefulListener) Accept() (net.Conn, error) {
@@ -26,7 +34,7 @@ func (l *GracefulListener) WaitShutdownAll() {
 // }
 
 // handle incomming connection and call server.Handler
-func (l *GracefulListener) serve(server http.Server) {
+func (l *GracefulListener) Serve(handler func(net.Conn)) {
 	for {
 		conn, err := l.listener.Accept()
 		if err != nil {
@@ -39,29 +47,23 @@ func (l *GracefulListener) serve(server http.Server) {
 		} else {
 			l.wg.Add(1)
 			go func() {
-				server.Handler()
+				handler(conn)
 				l.wg.Done()
-			}
+			}()
 		}
 	}
 }
 
 // Listen use file descriptor passed by Master as a socket.
-func Listen() (GracefulListener, error) {
+func Listen() (*GracefulListener, error) {
 	ln, err := net.FileListener(os.NewFile(uintptr(3), "dummy"))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return GracefulListener {
+	return &GracefulListener {
 		listener: ln,
-		quit: make(chan struct{})
-	}
+		quit: make(chan struct{}),
+	}, nil
 }
 
-func WaitAndGracefulShutdown(l *net.Listener) {
-	ch := make(chan os.Signal)
-	signal.Notify(ch, syscall.SIGTERM)
-	<- ch
-	l.WaitShutdownAll()
-}
 
