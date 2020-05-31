@@ -61,7 +61,7 @@ func (master *Master) Run() error {
 				if err != nil {
 					return err
 				}
-				time.Sleep(1 * time.Second) // TODO adjust
+				time.Sleep(1 * time.Second)
 
 				err = killProcess(pid)
 				if err != nil {
@@ -77,7 +77,7 @@ func (master *Master) Run() error {
 				err := killProcess(pid)
 				return err
 			}
-		case c := <- master.workerCh: //TODO: FIX: when ctrl-c is sent, child process exit with status code -1, and makes terminal frozen.
+		case c := <- master.workerCh:
 			// worker exited.
 			log.Printf("worker %d exited with status code %d, err %v\n", c.pid, c.exitStatus, c.err)
 			if c.err != nil {
