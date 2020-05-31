@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 
@@ -10,6 +12,16 @@ import (
 
 func handler(conn net.Conn) {
 	fmt.Fprintf(conn, "server pid %d\n", os.Getpid())
+	r := bufio.NewReader(conn)
+	for {
+		content, err := r.ReadString('\n')
+		if err == io.EOF {
+			return
+		} else if err != nil {
+			fmt.Fprintf(os.Stderr, err.Error())
+		}
+		fmt.Fprintf(conn, "pid: %d, %v", os.Getpid(), content)
+	}
 }
 
 func main() {
