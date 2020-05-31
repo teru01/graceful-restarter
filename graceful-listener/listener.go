@@ -49,6 +49,7 @@ func (l *GracefulListener) Serve(handler func(net.Conn)) {
 			go func() {
 				handler(conn)
 				l.wg.Done()
+				conn.Close()
 			}()
 		}
 	}
