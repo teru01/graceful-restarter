@@ -29,10 +29,6 @@ func (l *GracefulListener) WaitAndGracefulShutdown() {
 	l.WaitShutdownAll()
 }
 
-// func (l *GracefulListener) Accept() (net.Conn, error) {
-// 	l.wg.Add()
-// }
-
 // handle incomming connection and call server.Handler
 func (l *GracefulListener) Serve(handler func(net.Conn)) {
 	for {

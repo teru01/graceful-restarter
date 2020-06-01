@@ -30,6 +30,5 @@ func main() {
 		panic(err)
 	}
 	go l.Serve(handler)
-	// go server.Serve(l)
 	l.WaitAndGracefulShutdown()
 }
