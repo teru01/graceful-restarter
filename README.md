@@ -1,3 +1,5 @@
+https://github.com/teru01/graceful-restarter/workflows/build/badge.svg
+
 # graceful-restarter
 
 This project is inspired by [server-starter](https://github.com/lestrrat-go/server-starter), but a bit different in that graceful-restarter provides graceful shutdown and restart on TCP layer.
