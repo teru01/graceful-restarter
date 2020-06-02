@@ -1,4 +1,4 @@
-https://github.com/teru01/graceful-restarter/workflows/build/badge.svg
+![](https://github.com/teru01/graceful-restarter/workflows/build/badge.svg)
 
 # graceful-restarter
 
